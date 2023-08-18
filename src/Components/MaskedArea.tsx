@@ -22,7 +22,7 @@ export default function MaskedArea({ mask }: Props) {
                     <rect x="0" y="0" width="1000" height="1000" fill="white" />
 
                     {/* Everything under a black pixel will be invisible */}
-                    <rect x={mask.x} y={mask.y} width={mask.w} height={mask.h} fill="black" />
+                    <rect x={mask.left} y={mask.top} width={mask.width} height={mask.height} fill="black" />
                 </mask>
             </defs>
             <rect
@@ -33,12 +33,12 @@ export default function MaskedArea({ mask }: Props) {
                 mask="url(#myMask)"
                 style={{ fill: 'hsl(231deg 38% 19% / 60%)', filter: 'blur(5px)' }}
             />
-            <rect x={mask.x} y={mask.y} width={mask.w} height={mask.h} mask="url(#myMask)" fill="white" />
+            <rect x={mask.left} y={mask.top} width={mask.width} height={mask.height} mask="url(#myMask)" fill="white" />
             <rect
-                x={mask.x - bw / 2}
-                y={mask.y - bw / 2}
-                width={mask.w + bw}
-                height={mask.h + bw}
+                x={mask.left - bw / 2}
+                y={mask.top - bw / 2}
+                width={mask.width + bw}
+                height={mask.height + bw}
                 mask="url(#myMask)"
                 fill="rgb(10 2 255 / 54%)"
                 rx="1"

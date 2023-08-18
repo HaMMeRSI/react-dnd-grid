@@ -1,10 +1,10 @@
-import { useRef, useState, MouseEvent, useEffect } from 'react';
-import usePan from './Canvas/usePan';
-import useScale from './Canvas/useScale';
+import { useRef, useState, MouseEvent } from 'react';
+import usePan from './Hooks/usePan';
+import useScale from './Hooks/useScale';
 import usePrevious from './Hooks/usePrevious';
-import MaskedArea from './Canvas/MaskedArea';
-import DndComp from './Canvas/DndComponent/DndComp';
-import { Point, Rect } from './types';
+import MaskedArea from './Components/MaskedArea';
+import DndComp from './Components/DndComponent/DndComp';
+import { Rect } from './types';
 import styled from '@emotion/styled';
 import { ORIGIN, parseN, pointUtils } from './Utils';
 
@@ -57,7 +57,6 @@ export default function App() {
 
     const [isDndDraging, setIsDndDraging] = useState(false);
     const [isDndScaling, setIsDndScaling] = useState(false);
-    const [_isMouseDown, setIsMouseDown] = useState(false);
 
     const [relativeMousePos, setRelativeMousePos] = useState(ORIGIN());
     const [mousePosDown, setMousePosDown] = useState(ORIGIN());
@@ -65,7 +64,7 @@ export default function App() {
     const [cursor, setCursor] = useState('default');
     const [mask, setMaskPos] = useState<Rect | null>();
 
-    const [offset, startPan] = usePan(realPixestateRef);
+    const [startPan, offset] = usePan(realPixestateRef);
     const scale = useScale(realPixestateRef);
 
     const lastOffset = usePrevious(offset) ?? offset;
@@ -85,9 +84,9 @@ export default function App() {
         e.stopPropagation();
 
         if (mask) {
-            const x = Math.max(0, Math.min(1000 - mask.w, parseN(relativeMousePos.x)));
-            const y = Math.max(0, Math.min(1000 - mask.h, parseN(relativeMousePos.y)));
-            setMaskPos({ x, y, w: mask.w, h: mask.h });
+            const left = Math.max(0, Math.min(1000 - mask.width, parseN(relativeMousePos.x)));
+            const top = Math.max(0, Math.min(1000 - mask.height, parseN(relativeMousePos.y)));
+            setMaskPos({ top, left, width: mask.width, height: mask.height });
         }
     }
 
@@ -95,16 +94,15 @@ export default function App() {
         e.stopPropagation();
         if (mask) {
             const m = 4;
-            const w = Math.min(1000 - mask.x, Math.max(m, parseN(relativeMousePos.x) - mask.x + m));
-            const h = Math.min(1000 - mask.y, Math.max(m, parseN(relativeMousePos.y) - mask.y + m));
-            setMaskPos({ x: mask.x, y: mask.y, w: w >= 1000 ? 999 : w, h: h >= 1000 ? 999 : h });
+            const height = Math.min(1000 - mask.top, Math.max(m, parseN(relativeMousePos.y) - mask.top + m));
+            const width = Math.min(1000 - mask.left, Math.max(m, parseN(relativeMousePos.x) - mask.left + m));
+            setMaskPos({ top: mask.top, left: mask.left, width: width > 999 ? 999 : width, height: height > 999 ? 999 : height });
         }
     }
 
     function onMouseDown(e: MouseEvent) {
         startPan(e);
         setMousePosDown({ x: e.pageX, y: e.pageY });
-        setIsMouseDown(true);
     }
 
     function onMouseMove(e: MouseEvent) {
@@ -130,10 +128,10 @@ export default function App() {
 
         if (pointUtils.eq(upPoint, mousePosDown) && !mask) {
             setMaskPos({
-                x: parseInt(`${relativeMousePos.x / 5}`) * 5,
-                y: parseInt(`${relativeMousePos.y / 5}`) * 5,
-                w: 4,
-                h: 4,
+                top: parseInt(`${relativeMousePos.y / 5}`) * 5,
+                left: parseInt(`${relativeMousePos.x / 5}`) * 5,
+                width: 4,
+                height: 4,
             });
         } else if (!isDndDraging && !isDndScaling) {
             setMaskPos(null);
@@ -141,7 +139,6 @@ export default function App() {
 
         setIsDndDraging(false);
         setIsDndScaling(false);
-        setIsMouseDown(false);
         setCursor('default');
     }
 

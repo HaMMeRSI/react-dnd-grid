@@ -6,16 +6,16 @@ export function stopPropagation(e: UIEvent) {
 }
 
 export function maskToTokenId(mask: Section, size = 1000) {
-    return (mask.x * size + mask.y) * size * size + (mask.x + mask.w) * size + (mask.y + mask.h);
+    return (mask.left * size + mask.top) * size * size + (mask.left + mask.width) * size + (mask.top + mask.height);
 }
 
 export function breakTokenId(tokenId: number): Section {
     function Section(x1: any, y1: any, x2: any, y2: any): Section {
         return {
-            x: parseInt(x1),
-            y: parseInt(y1),
-            w: parseInt(x2) - parseInt(x1) || 1000,
-            h: parseInt(y2) - parseInt(y1) || 1000,
+            left: parseInt(x1),
+            top: parseInt(y1),
+            width: parseInt(x2) - parseInt(x1) || 1000,
+            height: parseInt(y2) - parseInt(y1) || 1000,
         };
     }
 
@@ -37,7 +37,7 @@ export function checkIntersection(tokenId: number, tokenIds: number[]) {
     for (const currTokenId of tokenIds) {
         const area1 = breakTokenId(tokenId);
         const area2 = breakTokenId(currTokenId);
-        if (!(area2.x > area1.x + area1.w || area2.x + area2.w < area1.x || area2.y > area1.y + area1.h || area2.y + area2.h < area1.y)) {
+        if (!(area2.left > area1.left + area1.width || area2.left + area2.width < area1.left || area2.top > area1.top + area1.height || area2.top + area2.height < area1.top)) {
             return true;
         }
     }
@@ -69,4 +69,10 @@ export const parseN = (number: number, n: number = 5) => parseInt(`${number / n}
 
 export function getCoordId([x1, y1]: [number, number], [x2, y2]: [number, number], size = 1000) {
     return (x1 * size + y1) * size * size + x2 * size + y2;
+}
+
+export function clamp(min: number, max: number, val: number) {
+    if (val >= max) return max;
+    if (val <= min) return min;
+    return val;
 }

@@ -14,8 +14,8 @@ const getBoxStyle = (tokenId: number, scale: number): CSSProperties => {
 
     return {
         position: 'absolute',
-        top: `${section.y + section.h / 5}px`,
-        left: `${section.x + section.w + 15 * adjScale}px`,
+        top: `${section.top + section.height / 5}px`,
+        left: `${section.left + section.width + 15 * adjScale}px`,
         transform: `scale(${adjScale}`,
         transformOrigin: '0 0',
         cursor: 'default',

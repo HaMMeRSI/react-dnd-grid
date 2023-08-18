@@ -1,6 +1,6 @@
 export type Point = { x: number; y: number };
 export type ImageT = [string, number, number, number, number];
-export type Section = { x: number; y: number; w: number; h: number };
+export type Section = { left: number; top: number; width: number; height: number };
 export type Metadata = {
     tokenId: number;
     image_url: string;
@@ -19,7 +19,7 @@ export type TokenPrices = {
     [key: string]: number;
 };
 
-export type Rect = { x: number; y: number; w: number; h: number };
+export type Rect = { top: number; left: number; width: number; height: number };
 
 declare global {
     interface Window {}

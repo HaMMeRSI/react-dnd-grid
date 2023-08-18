@@ -63,7 +63,7 @@ export default function Popup({ tokenId, onClose, parentForPotal, isVisible }: P
     }
 
     const mask = breakTokenId(tokenId);
-    const area = (mask.w + 1) * (mask.h + 1);
+    const area = (mask.width + 1) * (mask.height + 1);
 
     useEffect(() => {
         checkValidity().then(result => {
@@ -214,8 +214,8 @@ export default function Popup({ tokenId, onClose, parentForPotal, isVisible }: P
             <div className="modal">
                 <div className="modal__details">
                     <h1 className="modal__title">Minting token: {tokenId}</h1>
-                    <p className="modal__description">{`(X: ${mask.x} Y:${mask.y}) - Width: ${mask.w + 1} Height: ${
-                        mask.h + 1
+                    <p className="modal__description">{`(X: ${mask.left} Y:${mask.top}) - Width: ${mask.width + 1} Height: ${
+                        mask.height + 1
                     }, Area: ${area}`}</p>
                 </div>
 
