@@ -62,5 +62,5 @@
 	height: 4px;
 	transform-origin: top left;
 	z-index: 2;
-	cursor: nw-resize;
+	cursor: nwse-resize;
 }

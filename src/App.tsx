@@ -8,28 +8,31 @@ import { Rect } from './types';
 import styled from '@emotion/styled';
 import { ORIGIN, parseN, pointUtils } from './Utils';
 
+interface IRealPixestate {
+    offsetX: number;
+    offsetY: number;
+    scale: number;
+    lineWidth: number;
+    dimensons: number;
+    cellSize: number;
+}
+
 const Container = styled.div<{ cursor?: string }>`
     position: relative;
     cursor: ${props => props.cursor ?? 'default'};
 `;
 
-const RealPixestate = styled.div<{ offsetX: number; offsetY: number; scale: number }>`
+const RealPixestate = styled.div<IRealPixestate>`
     position: relative;
     transform: ${({ offsetX, offsetY, scale }) => `translate(${-offsetX}px, ${-offsetY}px) scale(${scale})`};
     transform-origin: 0 0;
-    display: inline-block;
-    width: fit-content;
-    box-shadow: black 0 0 50px -20px;
-`;
-
-const Grid = styled.div`
-    pointer-events: none;
-    position: relative;
-    width: 1000px;
-    height: 1000px;
-    background-size: 5px 5px;
-    background-image: linear-gradient(to right, grey 0.25px, transparent 0.25px),
-        linear-gradient(to bottom, grey 0.25px, transparent 0.25px);
+    width: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
+    height: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
+    background-color: #eeeeee22;
+    background-size: ${({ cellSize }) => `${cellSize}px ${cellSize}px`};
+    background-image: ${({ lineWidth: width }) => `
+        linear-gradient(to right, grey ${width}px, transparent ${width}px),
+        linear-gradient(to bottom, grey ${width}px, transparent ${width}px)`};
 `;
 
 const Canvas = styled.canvas`
@@ -38,16 +41,11 @@ const Canvas = styled.canvas`
     left: 0;
 `;
 
-const Blur = styled.div`
-    width: 100%;
-    height: 100%;
-    background-color: rgba(179, 179, 179, 0.23);
-    position: absolute;
-    top: 0;
-    left: 0;
-    filter: blur(4px);
-    pointer-events: none;
-`;
+const gridLine = 0.1;
+const dimensions = 100;
+const cellSize = 5;
+const realSize = cellSize * dimensions;
+const startScale = 1;
 
 export default function App() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,10 +60,10 @@ export default function App() {
     const [mousePosDown, setMousePosDown] = useState(ORIGIN());
 
     const [cursor, setCursor] = useState('default');
-    const [mask, setMaskPos] = useState<Rect | null>();
+    const [mask, setMaskPos] = useState<Rect | null>(null);
 
     const [startPan, offset] = usePan(realPixestateRef);
-    const scale = useScale(realPixestateRef);
+    const scale = useScale(realPixestateRef, { start: startScale });
 
     const lastOffset = usePrevious(offset) ?? offset;
     const lastScale = usePrevious(scale) ?? scale;
@@ -84,19 +82,43 @@ export default function App() {
         e.stopPropagation();
 
         if (mask) {
-            const left = Math.max(0, Math.min(1000 - mask.width, parseN(relativeMousePos.x)));
-            const top = Math.max(0, Math.min(1000 - mask.height, parseN(relativeMousePos.y)));
-            setMaskPos({ top, left, width: mask.width, height: mask.height });
+            const mouseCellPosX = parseN(relativeMousePos.x, cellSize);
+            const mouseCellPosY = parseN(relativeMousePos.y, cellSize);
+
+            const xMaxed = Math.min(realSize - mask.width, mouseCellPosX);
+            const yMaxed = Math.min(realSize - mask.height, mouseCellPosY);
+
+            const xBounded = Math.max(0, xMaxed);
+            const yBounded = Math.max(0, yMaxed);
+
+            setMaskPos({
+                top: yBounded,
+                left: xBounded,
+                width: mask.width,
+                height: mask.height,
+            });
         }
     }
 
     function dndScale(e: MouseEvent) {
         e.stopPropagation();
+
         if (mask) {
-            const m = 4;
-            const height = Math.min(1000 - mask.top, Math.max(m, parseN(relativeMousePos.y) - mask.top + m));
-            const width = Math.min(1000 - mask.left, Math.max(m, parseN(relativeMousePos.x) - mask.left + m));
-            setMaskPos({ top: mask.top, left: mask.left, width: width > 999 ? 999 : width, height: height > 999 ? 999 : height });
+            const mouseCellPosX = parseN(relativeMousePos.x, cellSize);
+            const mouseCellPosY = parseN(relativeMousePos.y, cellSize);
+
+            const heightMined = Math.max(cellSize, mouseCellPosY - mask.top + cellSize);
+            const widthMined = Math.max(cellSize, mouseCellPosX - mask.left + cellSize);
+
+            const heightBounded = Math.min(heightMined, realSize - mask.top);
+            const widthBounded = Math.min(widthMined, realSize - mask.left);
+
+            setMaskPos({
+                top: mask.top,
+                left: mask.left,
+                width: widthBounded,
+                height: heightBounded,
+            });
         }
     }
 
@@ -112,7 +134,7 @@ export default function App() {
             setCursor('grabbing');
             dndMove(e);
         } else if (isDndScaling) {
-            setCursor('nw-resize');
+            setCursor('nwse-resize');
             dndScale(e);
         }
 
@@ -128,10 +150,10 @@ export default function App() {
 
         if (pointUtils.eq(upPoint, mousePosDown) && !mask) {
             setMaskPos({
-                top: parseInt(`${relativeMousePos.y / 5}`) * 5,
-                left: parseInt(`${relativeMousePos.x / 5}`) * 5,
-                width: 4,
-                height: 4,
+                top: parseN(relativeMousePos.y, cellSize),
+                left: parseN(relativeMousePos.x, cellSize),
+                width: cellSize,
+                height: cellSize,
             });
         } else if (!isDndDraging && !isDndScaling) {
             setMaskPos(null);
@@ -149,23 +171,22 @@ export default function App() {
                 offsetY={adjustedOffset.current.y}
                 scale={scale}
                 ref={realPixestateRef}
+                lineWidth={gridLine}
+                dimensons={dimensions}
+                cellSize={cellSize}
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
                 onMouseUp={onMouseUp}>
-                <Grid />
-                <Canvas ref={canvasRef} width="1000" height="1000" />
-                {!!mask && (
-                    <DndComp
-                        parent={realPixestateRef}
-                        parentForPotal={containerRef}
-                        setDrag={setIsDndDraging}
-                        setIsScaling={setIsDndScaling}
-                        mask={mask}
-                        scale={scale}
-                    />
-                )}
-                {!!mask && <MaskedArea mask={mask} />}
-                <Blur />
+                <Canvas ref={canvasRef} width={cellSize * dimensions} height={cellSize * dimensions} />
+                <DndComp
+                    parent={realPixestateRef}
+                    parentForPotal={containerRef}
+                    setDrag={setIsDndDraging}
+                    setIsScaling={setIsDndScaling}
+                    mask={mask}
+                    scale={scale}
+                />
+                <MaskedArea mask={mask} adjust={gridLine} dimensions={dimensions} cellSize={cellSize} />
                 {/* <DescriptionBox scale={scale} tokenId={getAreaId([mask.x, mask.y], [mask.x + mask.w - 1, mask.y + mask.h - 1])} /> */}
             </RealPixestate>
         </Container>

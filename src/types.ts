@@ -1,6 +1,5 @@
 export type Point = { x: number; y: number };
 export type ImageT = [string, number, number, number, number];
-export type Section = { left: number; top: number; width: number; height: number };
 export type Metadata = {
     tokenId: number;
     image_url: string;

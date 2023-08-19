@@ -1,16 +1,16 @@
 import { UIEvent } from 'react';
-import { Point, Section } from './types';
+import { Point, Rect } from './types';
 
 export function stopPropagation(e: UIEvent) {
     e.stopPropagation();
 }
 
-export function maskToTokenId(mask: Section, size = 1000) {
+export function maskToTokenId(mask: Rect, size = 1000) {
     return (mask.left * size + mask.top) * size * size + (mask.left + mask.width) * size + (mask.top + mask.height);
 }
 
-export function breakTokenId(tokenId: number): Section {
-    function Section(x1: any, y1: any, x2: any, y2: any): Section {
+export function breakTokenId(tokenId: number): Rect {
+    function Section(x1: any, y1: any, x2: any, y2: any): Rect {
         return {
             left: parseInt(x1),
             top: parseInt(y1),
@@ -37,7 +37,14 @@ export function checkIntersection(tokenId: number, tokenIds: number[]) {
     for (const currTokenId of tokenIds) {
         const area1 = breakTokenId(tokenId);
         const area2 = breakTokenId(currTokenId);
-        if (!(area2.left > area1.left + area1.width || area2.left + area2.width < area1.left || area2.top > area1.top + area1.height || area2.top + area2.height < area1.top)) {
+        if (
+            !(
+                area2.left > area1.left + area1.width ||
+                area2.left + area2.width < area1.left ||
+                area2.top > area1.top + area1.height ||
+                area2.top + area2.height < area1.top
+            )
+        ) {
             return true;
         }
     }
@@ -75,4 +82,12 @@ export function clamp(min: number, max: number, val: number) {
     if (val >= max) return max;
     if (val <= min) return min;
     return val;
+}
+
+export function easeInOutSine(x: number): number {
+    return -(Math.cos(Math.PI * x) - 1) / 2;
+}
+
+export function remap(value: number, low1: number, high1: number, low2: number, high2: number) {
+    return low2 + ((high2 - low2) * (value - low1)) / (high1 - low1);
 }

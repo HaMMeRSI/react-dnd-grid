@@ -2,12 +2,12 @@ import './DndComponent.css';
 import { CSSProperties, MouseEvent as SyntheticMouseEvent, RefObject } from 'react';
 import SvgMove from '../../Images/MoveSvg';
 import ScaleSvg from '../../Images/ScaleSvg';
-import { Section } from '../../types';
 import { stopPropagation } from '../../Utils';
+import { Rect } from '@/types';
 
 type Props = {
     parent: RefObject<HTMLElement>;
-    mask: Section;
+    mask: Rect | null;
     setDrag: (isDrag: boolean) => void;
     setIsScaling: (isScaling: boolean) => void;
 
@@ -16,6 +16,8 @@ type Props = {
 };
 
 export default function DndComp({ mask, setDrag, setIsScaling, scale, parentForPotal: _ }: Props) {
+    if (!mask) return null;
+
     function dnd_drag_down(e: SyntheticMouseEvent) {
         e.stopPropagation();
         setDrag(true);
