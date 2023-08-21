@@ -15,11 +15,12 @@ interface IProps {
     adjust: number;
     dimensions: number;
     cellSize: number;
-    lineWidth?: number;
-    lineColor?: string;
+    width?: number;
+    color?: string;
+    radius?: number;
 }
 
-export default function MaskedArea({ mask, adjust, dimensions, cellSize, lineWidth = 2, lineColor = 'rgb(10 2 255 / 54%)' }: IProps) {
+export default function MaskedArea({ mask, adjust, dimensions, cellSize, width = 2, color = 'rgb(10 2 255 / 54%)', radius = 0 }: IProps) {
     if (!mask) return null;
 
     const realSize = dimensions * cellSize;
@@ -44,13 +45,13 @@ export default function MaskedArea({ mask, adjust, dimensions, cellSize, lineWid
             />
             <rect x={mask.left} y={mask.top} width={mask.width} height={mask.height} mask="url(#myMask)" fill="white" />
             <rect
-                x={mask.left - lineWidth / 2}
-                y={mask.top - lineWidth / 2}
-                width={mask.width + lineWidth + adjust}
-                height={mask.height + lineWidth + adjust}
+                x={mask.left - width / 2}
+                y={mask.top - width / 2}
+                width={mask.width + width + adjust}
+                height={mask.height + width + adjust}
                 mask="url(#myMask)"
-                fill={lineColor}
-                rx="0"
+                fill={color}
+                rx={radius}
             />
         </Svg>
     );
