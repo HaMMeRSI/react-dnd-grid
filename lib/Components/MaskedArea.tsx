@@ -1,3 +1,4 @@
+import { clamp } from '@/Utils';
 import { Rect } from '@/types';
 import styled from '@emotion/styled';
 
@@ -18,12 +19,23 @@ interface IProps {
     width?: number;
     color?: string;
     radius?: number;
+    opacity?: number;
 }
 
-export default function MaskedArea({ mask, adjust, dimensions, cellSize, width = 2, color = 'rgb(10 2 255 / 54%)', radius = 0 }: IProps) {
+export default function MaskedArea({
+    mask,
+    adjust,
+    dimensions,
+    cellSize,
+    width = 2,
+    color = 'rgb(10 2 255 / 54%)',
+    radius = 0,
+    opacity = 0.7,
+}: IProps) {
     if (!mask) return null;
 
     const realSize = dimensions * cellSize;
+
     return (
         <Svg viewBox={`0 0 ${realSize} ${realSize}`} realSize={realSize}>
             <defs>
@@ -41,7 +53,7 @@ export default function MaskedArea({ mask, adjust, dimensions, cellSize, width =
                 width={realSize}
                 height={realSize}
                 mask="url(#myMask)"
-                style={{ fill: 'hsl(231deg 38% 19% / 60%)', filter: 'blur(5px)' }}
+                style={{ fill: `rgb(0 0 0 / ${clamp(0, 1, opacity) * 100}%)` }}
             />
             <rect x={mask.left} y={mask.top} width={mask.width} height={mask.height} mask="url(#myMask)" fill="white" />
             <rect

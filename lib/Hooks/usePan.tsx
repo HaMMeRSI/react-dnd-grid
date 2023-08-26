@@ -8,6 +8,8 @@ export default function usePan(ref: RefObject<HTMLElement | null>) {
     const [isPanning, setIsPanning] = useState(false);
 
     const pan = (e: MouseEvent) => {
+        setIsPanning(true);
+
         const lastPoint = lastPointRef.current;
         const point: Point = { x: e.pageX, y: e.pageY };
         lastPointRef.current = point;
@@ -20,19 +22,15 @@ export default function usePan(ref: RefObject<HTMLElement | null>) {
         });
     };
 
-    // Tear down listeners.
-    const endPan = (_e: MouseEvent) => {
-        setIsPanning(false);
-        ref.current?.removeEventListener('mousemove', pan);
-        ref.current?.removeEventListener('mouseup', endPan);
-    };
-
     // Set up listeners.
     const startPan = (e: SyntheticMouseEvent) => {
-        setIsPanning(true);
         ref.current?.addEventListener('mousemove', pan);
-        ref.current?.addEventListener('mouseup', endPan);
         lastPointRef.current = { x: e.pageX, y: e.pageY };
+
+        return () => {
+            setIsPanning(false);
+            ref.current?.removeEventListener('mousemove', pan);
+        };
     };
 
     return [startPan, panState, isPanning] as const;

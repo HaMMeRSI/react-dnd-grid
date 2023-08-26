@@ -1,65 +1,79 @@
-import usePan from '@/Hooks/usePan';
-import usePrevious from '@/Hooks/usePrevious';
-import useScale from '@/Hooks/useScale';
 import { ORIGIN, pointUtils, parseN } from '@/Utils';
-import { Rect } from '@/types';
 import styled from '@emotion/styled';
 import { useRef, useState, useCallback, MouseEvent } from 'react';
-import DndComp from './DndComp';
+import DndComp from './SelectionComponent';
 import MaskedArea from './MaskedArea';
+import usePan from '$/Hooks/usePan';
+import usePrevious from '$/Hooks/usePrevious';
+import useScale from '$/Hooks/useScale';
+import { useGridContext } from '$/main';
 
-interface IRealPixestate {
+interface IGridState {
     offsetX: number;
     offsetY: number;
     scale: number;
-    lineWidth: number;
     dimensons: number;
     cellSize: number;
     cursor?: string;
 }
 
-const RealPixestate = styled.div<IRealPixestate>`
+const GridContainer = styled.div<IGridState>`
     position: relative;
     transform: ${({ offsetX, offsetY, scale }) => `translate(${-offsetX}px, ${-offsetY}px) scale(${scale})`};
     transform-origin: 0 0;
     width: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
     height: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
     cursor: ${props => props.cursor ?? 'default'};
+`;
+
+const Grid = styled.div<{ cellSize: number; lineWidth: number }>`
+    position: absolute;
+    inset: 0;
+    background-color: transparent;
     background-size: ${({ cellSize }) => `${cellSize}px ${cellSize}px`};
     background-image: ${({ lineWidth: width }) => `
         linear-gradient(to right, grey ${width}px, transparent ${width}px),
         linear-gradient(to bottom, grey ${width}px, transparent ${width}px)`};
+    user-select: none;
+    pointer-events: none;
 `;
 
-const Canvas = styled.canvas`
-    position: absolute;
-    top: 0;
-    left: 0;
-`;
-
-interface IProps {
-    lineWidth?: number;
-    dimensions?: number;
-    cellSize?: number;
+export interface IGridProps {
     className?: string;
+    children?: React.ReactNode;
+    selectOptions?: {
+        enable?: boolean;
+        component?: React.ReactNode;
+        scaleIcon?: React.ReactNode;
+        stretchIcon?: React.ReactNode;
+        maskOptions?: {
+            radius?: number;
+            lineWidth?: number;
+            lineColor?: string;
+            opacity?: number;
+        };
+    };
     scaleOptions?: {
         min?: number;
         max?: number;
         speed?: number;
     };
-    maskOptions?: {
-        radius?: number;
+    gridOptions?: {
+        enable?: boolean;
         lineWidth?: number;
-        lineColor?: string;
+        dimensions?: number;
+        cellSize?: number;
     };
 }
 
-export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, className, scaleOptions, maskOptions }: IProps) {
+export default function ({ gridOptions, className, scaleOptions, selectOptions, children }: IGridProps) {
+    const { cellSize = 5, dimensions = 100, lineWidth = 0.1, enable: enableGrid = false } = gridOptions ?? {};
+    const { enable: enableSelect = false } = selectOptions ?? {};
     const realSize = cellSize * dimensions;
 
     const realPixestateRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
     const adjustedOffset = useRef(ORIGIN());
+    const endPan = useRef<VoidFunction>(() => {});
 
     const [relativeMousePos, setRelativeMousePos] = useState(ORIGIN());
     const [mousePosDown, setMousePosDown] = useState(ORIGIN());
@@ -67,7 +81,6 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
     const [isMaskStretching, setIsMaskStretching] = useState(false);
     const [isMaskDragging, setIsMaskDragging] = useState(false);
 
-    const [mask, setMaskPos] = useState<Rect | null>(null);
     const [cursor, setCursor] = useState('default');
 
     const [startPan, offset, isPanning] = usePan(realPixestateRef);
@@ -75,6 +88,8 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
 
     const lastOffset = usePrevious(offset) ?? offset;
     const lastScale = usePrevious(scale) ?? scale;
+
+    const { mask, setMask } = useGridContext();
 
     if (lastScale === scale) {
         const delta = pointUtils.diff(offset, lastOffset);
@@ -87,7 +102,7 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
     }
 
     const onMouseDown = useCallback((e: MouseEvent) => {
-        startPan(e);
+        endPan.current = startPan(e);
         setMousePosDown({ x: e.pageX, y: e.pageY });
     }, []);
 
@@ -113,7 +128,7 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
                     const xBounded = Math.max(0, xMaxed);
                     const yBounded = Math.max(0, yMaxed);
 
-                    setMaskPos({
+                    setMask({
                         top: yBounded,
                         left: xBounded,
                         width: mask.width,
@@ -131,14 +146,12 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
                     const widthBounded = Math.min(widthMined, realSize - mask.left);
                     const heightBounded = Math.min(heightMined, realSize - mask.top);
 
-                    setMaskPos({
+                    setMask({
                         top: mask.top,
                         left: mask.left,
                         width: widthBounded,
                         height: heightBounded,
                     });
-                } else if (isPanning) {
-                    setMaskPos(null);
                 }
             }
         },
@@ -149,48 +162,60 @@ export default function ({ lineWidth = 0.1, dimensions = 100, cellSize = 5, clas
         (e: MouseEvent) => {
             e.stopPropagation();
             const upPoint = { x: e.pageX, y: e.pageY };
+            setIsMaskStretching(false);
+            setIsMaskDragging(false);
 
             if (pointUtils.eq(upPoint, mousePosDown) && !mask) {
-                setMaskPos({
+                setMask({
                     top: parseN(relativeMousePos.y, cellSize),
                     left: parseN(relativeMousePos.x, cellSize),
                     width: cellSize,
                     height: cellSize,
                 });
-            } else if (!isMaskDragging && !isMaskStretching) {
-                setMaskPos(null);
+            } else if (!isMaskDragging && !isMaskStretching && !isPanning) {
+                setMask(null);
             }
 
+            endPan.current();
             setCursor('default');
         },
         [mask, cellSize, relativeMousePos, mousePosDown, isMaskDragging, isMaskStretching]
     );
 
     return (
-        <RealPixestate
+        <GridContainer
             ref={realPixestateRef}
             className={className}
             cursor={cursor}
             offsetX={adjustedOffset.current.x}
             offsetY={adjustedOffset.current.y}
             scale={scale}
-            lineWidth={lineWidth}
             dimensons={dimensions}
             cellSize={cellSize}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}>
-            <Canvas ref={canvasRef} width={cellSize * dimensions} height={cellSize * dimensions} />
-            <DndComp onDrag={setIsMaskDragging} onStretch={setIsMaskStretching} mask={mask} scale={scale} />
+            {children}
+            <DndComp
+                onDrag={setIsMaskDragging}
+                onStretch={setIsMaskStretching}
+                mask={enableSelect ? mask : null}
+                scale={scale}
+                component={selectOptions?.component}
+                scaleIcon={selectOptions?.scaleIcon}
+                stretchIcon={selectOptions?.stretchIcon}
+            />
+            {enableGrid && <Grid cellSize={cellSize} lineWidth={lineWidth} />}
             <MaskedArea
-                mask={mask}
+                mask={enableSelect ? mask : null}
                 adjust={lineWidth}
                 dimensions={dimensions}
                 cellSize={cellSize}
-                color={maskOptions?.lineColor}
-                width={maskOptions?.lineWidth}
-                radius={maskOptions?.radius}
+                opacity={selectOptions?.maskOptions?.opacity}
+                color={selectOptions?.maskOptions?.lineColor}
+                width={selectOptions?.maskOptions?.lineWidth}
+                radius={selectOptions?.maskOptions?.radius}
             />
-        </RealPixestate>
+        </GridContainer>
     );
 }
