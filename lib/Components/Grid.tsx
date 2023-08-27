@@ -91,15 +91,15 @@ export default function ({ gridOptions, className, style, scaleOptions, selectOp
 
     const { mask, setMask } = useGridContext();
 
-        if (lastScale === scale) {
-            const delta = pointUtils.diff(offset, lastOffset);
-            adjustedOffset.current = pointUtils.sum(adjustedOffset.current, delta);
-        } else {
-            const lastMouse = pointUtils.scale(relativeMousePos, lastScale);
-            const newMouse = pointUtils.scale(relativeMousePos, scale);
-            const mouseOffset = pointUtils.diff(lastMouse, newMouse);
-            adjustedOffset.current = pointUtils.diff(adjustedOffset.current, mouseOffset);
-        }
+    if (lastScale === scale) {
+        const delta = pointUtils.diff(offset, lastOffset);
+        adjustedOffset.current = pointUtils.sum(adjustedOffset.current, delta);
+    } else {
+        const lastMouse = pointUtils.scale(relativeMousePos, lastScale);
+        const newMouse = pointUtils.scale(relativeMousePos, scale);
+        const mouseOffset = pointUtils.diff(lastMouse, newMouse);
+        adjustedOffset.current = pointUtils.diff(adjustedOffset.current, mouseOffset);
+    }
 
     const onMouseDown = useCallback((e: MouseEvent) => {
         endPan.current = startPan(e);
