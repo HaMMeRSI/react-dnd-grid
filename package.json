@@ -14,7 +14,7 @@
         "url": "https://github.com/HaMMeRSI/react-zoom-pan-grid"
     },
     "license": "MIT",
-    "description": "high level and customizable dnd box",
+    "description": "light and simple react component for panning and zooming html elements",
     "scripts": {
         "dev": "vite",
         "build:lib": "vite build",
@@ -48,13 +48,14 @@
     },
     "keywords": [
         "react-component",
-        "react-dnd",
-        "dnd",
-        "drag",
-        "drop",
+        "react-pan-zoom",
+        "react-pan-zoom-grid",
+        "pan",
+        "zoom",
+        "select",
+        "selection",
         "grid",
         "box",
-        "zoom",
         "select"
     ]
 }
