@@ -1,4 +1,4 @@
-import Grid from './Components/Grid';
-import GridProvider, { useGridContext } from './Provider/GridProvider';
+import Grid from './Components/Box';
+import BoxProvider, { useBoxContext } from './Provider/BoxProvider';
 
-export { Grid, GridProvider, useGridContext };
+export { Grid as Box, BoxProvider, useBoxContext };

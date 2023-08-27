@@ -1,5 +1,5 @@
 import { CSSProperties, useState } from 'react';
-import { Grid, GridProvider } from '$/main';
+import { Box, BoxProvider } from '$/main';
 
 const imgStyle: CSSProperties = {
     position: 'absolute',
@@ -33,8 +33,8 @@ export default function App() {
     const [dimensions, _setDimensions] = useState(100);
 
     return (
-        <GridProvider>
-            <Grid
+        <BoxProvider>
+            <Box
                 style={{ backgroundColor: '#eeeeee22' }}
                 gridOptions={{
                     enable: true,
@@ -53,9 +53,8 @@ export default function App() {
                         </button>
                     ),
                 }}>
-                {/* <Canvas width={cellSize * dimensions} height={cellSize * dimensions} /> */}
                 <img src="https://picsum.photos/500/500" style={imgStyle} />
-            </Grid>
-        </GridProvider>
+            </Box>
+        </BoxProvider>
     );
 }

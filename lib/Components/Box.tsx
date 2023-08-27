@@ -1,13 +1,13 @@
 import { useRef, useState, useCallback, MouseEvent, CSSProperties } from 'react';
 import DndComp from './SelectionComponent';
-import MaskedArea from './MaskedArea';
+import MaskedArea from './SelectionArea';
 import usePan from '$/Hooks/usePan';
 import usePrevious from '$/Hooks/usePrevious';
 import useScale from '$/Hooks/useScale';
-import { useGridContext } from '$/main';
+import {  useBoxContext } from '$/main';
 import { ORIGIN, pointUtils, parseN } from '$/Utils';
 
-interface IGridState {
+interface IBoxState {
     offsetX: number;
     offsetY: number;
     scale: number;
@@ -17,7 +17,7 @@ interface IGridState {
     extra?: CSSProperties;
 }
 
-const containerStyle = ({ offsetX, offsetY, scale, dimensions, cellSize, cursor, extra }: IGridState): CSSProperties => ({
+const boxStyle = ({ offsetX, offsetY, scale, dimensions, cellSize, cursor, extra }: IBoxState): CSSProperties => ({
     position: 'relative',
     transform: `translate(${-offsetX}px, ${-offsetY}px) scale(${scale})`,
     transformOrigin: '0 0',
@@ -37,7 +37,7 @@ const gridStyle = (cellSize: number, lineWidth: number): CSSProperties => ({
     pointerEvents: 'none',
 });
 
-export interface IGridProps {
+export interface IBoxProps {
     className?: string;
     style?: CSSProperties;
     children?: React.ReactNode;
@@ -66,30 +66,30 @@ export interface IGridProps {
     };
 }
 
-export default function ({ gridOptions, className, style, scaleOptions, selectOptions, children }: IGridProps) {
+export default function ({ gridOptions, className, style, scaleOptions, selectOptions, children }: IBoxProps) {
     const { cellSize = 5, dimensions = 100, lineWidth = 0.1, enable: enableGrid = false } = gridOptions ?? {};
     const { enable: enableSelect = false } = selectOptions ?? {};
     const realSize = cellSize * dimensions;
 
-    const realPixestateRef = useRef<HTMLDivElement>(null);
+    const boxRef = useRef<HTMLDivElement>(null);
     const adjustedOffset = useRef(ORIGIN());
     const endPan = useRef<VoidFunction>(() => {});
 
     const [relativeMousePos, setRelativeMousePos] = useState(ORIGIN());
     const [mousePosDown, setMousePosDown] = useState(ORIGIN());
 
-    const [isMaskStretching, setIsMaskStretching] = useState(false);
-    const [isMaskDragging, setIsMaskDragging] = useState(false);
+    const [isSelectionStretching, setIsSelectionStretching] = useState(false);
+    const [isSelectionDragging, setIsSelectionDragging] = useState(false);
 
     const [cursor, setCursor] = useState('default');
 
-    const [startPan, offset, isPanning] = usePan(realPixestateRef);
-    const scale = useScale(realPixestateRef, scaleOptions);
+    const [startPan, offset, isPanning] = usePan(boxRef);
+    const scale = useScale(boxRef, scaleOptions);
 
     const lastOffset = usePrevious(offset) ?? offset;
     const lastScale = usePrevious(scale) ?? scale;
 
-    const { mask, setMask } = useGridContext();
+    const { selection, setSelection } = useBoxContext();
 
     if (lastScale === scale) {
         const delta = pointUtils.diff(offset, lastOffset);
@@ -113,83 +113,83 @@ export default function ({ gridOptions, className, style, scaleOptions, selectOp
                 y: (e.pageY + adjustedOffset.current.y) / scale,
             });
 
-            if (mask) {
+            if (selection) {
                 e.stopPropagation();
 
-                if (isMaskDragging) {
+                if (isSelectionDragging) {
                     setCursor('grabbing');
 
                     const mouseCellPosX = parseN(relativeMousePos.x, cellSize);
                     const mouseCellPosY = parseN(relativeMousePos.y, cellSize);
 
-                    const xMaxed = Math.min(realSize - mask.width, mouseCellPosX);
-                    const yMaxed = Math.min(realSize - mask.height, mouseCellPosY);
+                    const xMaxed = Math.min(realSize - selection.width, mouseCellPosX);
+                    const yMaxed = Math.min(realSize - selection.height, mouseCellPosY);
 
                     const xBounded = Math.max(0, xMaxed);
                     const yBounded = Math.max(0, yMaxed);
 
-                    setMask({
+                    setSelection({
                         top: yBounded,
                         left: xBounded,
-                        width: mask.width,
-                        height: mask.height,
+                        width: selection.width,
+                        height: selection.height,
                     });
-                } else if (isMaskStretching) {
+                } else if (isSelectionStretching) {
                     setCursor('nwse-resize');
 
                     const mouseCellPosX = parseN(relativeMousePos.x, cellSize);
                     const mouseCellPosY = parseN(relativeMousePos.y, cellSize);
 
-                    const widthMined = Math.max(cellSize, mouseCellPosX - mask.left + cellSize);
-                    const heightMined = Math.max(cellSize, mouseCellPosY - mask.top + cellSize);
+                    const widthMined = Math.max(cellSize, mouseCellPosX - selection.left + cellSize);
+                    const heightMined = Math.max(cellSize, mouseCellPosY - selection.top + cellSize);
 
-                    const widthBounded = Math.min(widthMined, realSize - mask.left);
-                    const heightBounded = Math.min(heightMined, realSize - mask.top);
+                    const widthBounded = Math.min(widthMined, realSize - selection.left);
+                    const heightBounded = Math.min(heightMined, realSize - selection.top);
 
-                    setMask({
-                        top: mask.top,
-                        left: mask.left,
+                    setSelection({
+                        top: selection.top,
+                        left: selection.left,
                         width: widthBounded,
                         height: heightBounded,
                     });
                 }
             }
         },
-        [scale, mask, cellSize, realSize, relativeMousePos, isMaskDragging, isMaskStretching, isPanning]
+        [scale, selection, cellSize, realSize, relativeMousePos, isSelectionDragging, isSelectionStretching, isPanning]
     );
 
     const onMouseUp = useCallback(
         (e: MouseEvent) => {
             e.stopPropagation();
             const upPoint = { x: e.pageX, y: e.pageY };
-            setIsMaskStretching(false);
-            setIsMaskDragging(false);
+            setIsSelectionStretching(false);
+            setIsSelectionDragging(false);
 
-            if (pointUtils.eq(upPoint, mousePosDown) && !mask) {
-                setMask({
+            if (pointUtils.eq(upPoint, mousePosDown) && !selection) {
+                setSelection({
                     top: parseN(relativeMousePos.y, cellSize),
                     left: parseN(relativeMousePos.x, cellSize),
                     width: cellSize,
                     height: cellSize,
                 });
-            } else if (!isMaskDragging && !isMaskStretching && !isPanning) {
-                setMask(null);
+            } else if (!isSelectionDragging && !isSelectionStretching && !isPanning) {
+                setSelection(null);
             }
 
             endPan.current();
             setCursor('default');
         },
-        [mask, cellSize, relativeMousePos, mousePosDown, isMaskDragging, isMaskStretching]
+        [selection, cellSize, relativeMousePos, mousePosDown, isSelectionDragging, isSelectionStretching]
     );
 
     return (
         <div
-            ref={realPixestateRef}
+            ref={boxRef}
             className={className}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
-            style={containerStyle({
+            style={boxStyle({
                 offsetX: adjustedOffset.current.x,
                 offsetY: adjustedOffset.current.y,
                 scale,
@@ -200,9 +200,9 @@ export default function ({ gridOptions, className, style, scaleOptions, selectOp
             })}>
             {children}
             <DndComp
-                onDrag={setIsMaskDragging}
-                onStretch={setIsMaskStretching}
-                mask={enableSelect ? mask : null}
+                onDrag={setIsSelectionDragging}
+                onStretch={setIsSelectionStretching}
+                selection={enableSelect ? selection : null}
                 scale={scale}
                 component={selectOptions?.component}
                 scaleIcon={selectOptions?.scaleIcon}
@@ -210,7 +210,7 @@ export default function ({ gridOptions, className, style, scaleOptions, selectOp
             />
             {enableGrid && <div style={gridStyle(cellSize, lineWidth)} />}
             <MaskedArea
-                mask={enableSelect ? mask : null}
+                selection={enableSelect ? selection : null}
                 adjust={lineWidth}
                 dimensions={dimensions}
                 cellSize={cellSize}

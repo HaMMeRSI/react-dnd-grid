@@ -1,8 +1,8 @@
 {
-    "name": "react-dnd-box",
+    "name": "react-zoom-pan-grid",
     "author": "Sagi Hammer <sagi.hammer@gmail.com>",
     "private": false,
-    "version": "1.0.0-pre6",
+    "version": "1.0.1",
     "type": "module",
     "main": "dist/main.js",
     "types": "dist/main.d.ts",
@@ -11,7 +11,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/HaMMeRSI/react-dnd-grid"
+        "url": "https://github.com/HaMMeRSI/react-pan-zoom-grid"
     },
     "license": "MIT",
     "description": "high level and customizable dnd box",
@@ -20,7 +20,6 @@
         "build:lib": "vite build",
         "build": "yarn clean && tsc && yarn build:lib",
         "clean": "rimraf dist",
-        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview"
     },
     "peerDependencies": {

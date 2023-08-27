@@ -46,8 +46,8 @@ const stretchStyle = {
     cursor: 'nwse-resize',
 };
 
-type Props = {
-    mask: Rect | null;
+interface IProps {
+    selection: Rect | null;
     scale: number;
 
     onDrag: (isDrag: boolean) => void;
@@ -56,10 +56,10 @@ type Props = {
     component?: React.ReactNode;
     scaleIcon?: React.ReactNode;
     stretchIcon?: React.ReactNode;
-};
+}
 
-export default function DndComp({ mask, onDrag, onStretch, scale, component, scaleIcon, stretchIcon }: Props) {
-    if (!mask) return null;
+export default function ({ selection, onDrag, onStretch, scale, component, scaleIcon, stretchIcon }: IProps) {
+    if (!selection) return null;
 
     const scaled = Math.max(1, (1 / scale) * 4);
 
@@ -71,7 +71,7 @@ export default function DndComp({ mask, onDrag, onStretch, scale, component, sca
     }
 
     return (
-        <div style={containerStyle(mask)}>
+        <div style={containerStyle(selection)}>
             <div style={moveContainerStyle(scaled)} onMouseDown={turnOn(onDrag)}>
                 {scaleIcon ?? <MaskedIcon src={MoveSvg} size="5px" color="white" style={moveStyle} />}
             </div>
