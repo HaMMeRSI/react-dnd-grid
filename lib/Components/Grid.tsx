@@ -1,45 +1,45 @@
-import { ORIGIN, pointUtils, parseN } from '@/Utils';
-import styled from '@emotion/styled';
-import { useRef, useState, useCallback, MouseEvent } from 'react';
+import { useRef, useState, useCallback, MouseEvent, CSSProperties } from 'react';
 import DndComp from './SelectionComponent';
 import MaskedArea from './MaskedArea';
 import usePan from '$/Hooks/usePan';
 import usePrevious from '$/Hooks/usePrevious';
 import useScale from '$/Hooks/useScale';
 import { useGridContext } from '$/main';
+import { ORIGIN, pointUtils, parseN } from '$/Utils';
 
 interface IGridState {
     offsetX: number;
     offsetY: number;
     scale: number;
-    dimensons: number;
+    dimensions: number;
     cellSize: number;
     cursor?: string;
+    extra?: CSSProperties;
 }
 
-const GridContainer = styled.div<IGridState>`
-    position: relative;
-    transform: ${({ offsetX, offsetY, scale }) => `translate(${-offsetX}px, ${-offsetY}px) scale(${scale})`};
-    transform-origin: 0 0;
-    width: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
-    height: ${({ dimensons, cellSize }) => cellSize * dimensons}px;
-    cursor: ${props => props.cursor ?? 'default'};
-`;
+const containerStyle = ({ offsetX, offsetY, scale, dimensions, cellSize, cursor, extra }: IGridState): CSSProperties => ({
+    position: 'relative',
+    transform: `translate(${-offsetX}px, ${-offsetY}px) scale(${scale})`,
+    transformOrigin: '0 0',
+    width: `${cellSize * dimensions}px`,
+    height: `${cellSize * dimensions}px`,
+    cursor: cursor ?? 'default',
+    ...extra,
+});
 
-const Grid = styled.div<{ cellSize: number; lineWidth: number }>`
-    position: absolute;
-    inset: 0;
-    background-color: transparent;
-    background-size: ${({ cellSize }) => `${cellSize}px ${cellSize}px`};
-    background-image: ${({ lineWidth: width }) => `
-        linear-gradient(to right, grey ${width}px, transparent ${width}px),
-        linear-gradient(to bottom, grey ${width}px, transparent ${width}px)`};
-    user-select: none;
-    pointer-events: none;
-`;
+const gridStyle = (cellSize: number, lineWidth: number): CSSProperties => ({
+    position: 'absolute',
+    inset: '0',
+    backgroundColor: 'transparent',
+    backgroundSize: `${cellSize}px ${cellSize}px`,
+    backgroundImage: `linear-gradient(to right, grey ${lineWidth}px, transparent ${lineWidth}px), linear-gradient(to bottom, grey ${lineWidth}px, transparent ${lineWidth}px)`,
+    userSelect: 'none',
+    pointerEvents: 'none',
+});
 
 export interface IGridProps {
     className?: string;
+    style?: CSSProperties;
     children?: React.ReactNode;
     selectOptions?: {
         enable?: boolean;
@@ -66,7 +66,7 @@ export interface IGridProps {
     };
 }
 
-export default function ({ gridOptions, className, scaleOptions, selectOptions, children }: IGridProps) {
+export default function ({ gridOptions, className, style, scaleOptions, selectOptions, children }: IGridProps) {
     const { cellSize = 5, dimensions = 100, lineWidth = 0.1, enable: enableGrid = false } = gridOptions ?? {};
     const { enable: enableSelect = false } = selectOptions ?? {};
     const realSize = cellSize * dimensions;
@@ -91,15 +91,15 @@ export default function ({ gridOptions, className, scaleOptions, selectOptions, 
 
     const { mask, setMask } = useGridContext();
 
-    if (lastScale === scale) {
-        const delta = pointUtils.diff(offset, lastOffset);
-        adjustedOffset.current = pointUtils.sum(adjustedOffset.current, delta);
-    } else {
-        const lastMouse = pointUtils.scale(relativeMousePos, lastScale);
-        const newMouse = pointUtils.scale(relativeMousePos, scale);
-        const mouseOffset = pointUtils.diff(lastMouse, newMouse);
-        adjustedOffset.current = pointUtils.diff(adjustedOffset.current, mouseOffset);
-    }
+        if (lastScale === scale) {
+            const delta = pointUtils.diff(offset, lastOffset);
+            adjustedOffset.current = pointUtils.sum(adjustedOffset.current, delta);
+        } else {
+            const lastMouse = pointUtils.scale(relativeMousePos, lastScale);
+            const newMouse = pointUtils.scale(relativeMousePos, scale);
+            const mouseOffset = pointUtils.diff(lastMouse, newMouse);
+            adjustedOffset.current = pointUtils.diff(adjustedOffset.current, mouseOffset);
+        }
 
     const onMouseDown = useCallback((e: MouseEvent) => {
         endPan.current = startPan(e);
@@ -183,18 +183,21 @@ export default function ({ gridOptions, className, scaleOptions, selectOptions, 
     );
 
     return (
-        <GridContainer
+        <div
             ref={realPixestateRef}
             className={className}
-            cursor={cursor}
-            offsetX={adjustedOffset.current.x}
-            offsetY={adjustedOffset.current.y}
-            scale={scale}
-            dimensons={dimensions}
-            cellSize={cellSize}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
-            onMouseUp={onMouseUp}>
+            onMouseUp={onMouseUp}
+            style={containerStyle({
+                offsetX: adjustedOffset.current.x,
+                offsetY: adjustedOffset.current.y,
+                scale,
+                dimensions,
+                cellSize,
+                cursor,
+                extra: style,
+            })}>
             {children}
             <DndComp
                 onDrag={setIsMaskDragging}
@@ -205,7 +208,7 @@ export default function ({ gridOptions, className, scaleOptions, selectOptions, 
                 scaleIcon={selectOptions?.scaleIcon}
                 stretchIcon={selectOptions?.stretchIcon}
             />
-            {enableGrid && <Grid cellSize={cellSize} lineWidth={lineWidth} />}
+            {enableGrid && <div style={gridStyle(cellSize, lineWidth)} />}
             <MaskedArea
                 mask={enableSelect ? mask : null}
                 adjust={lineWidth}
@@ -216,6 +219,6 @@ export default function ({ gridOptions, className, scaleOptions, selectOptions, 
                 width={selectOptions?.maskOptions?.lineWidth}
                 radius={selectOptions?.maskOptions?.radius}
             />
-        </GridContainer>
+        </div>
     );
 }

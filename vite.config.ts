@@ -44,27 +44,7 @@ export default () => {
                 },
             },
         },
-        plugins: [
-            VitePluginHtmlEnv({
-                compiler: false,
-            }),
-            react({
-                babel: {
-                    plugins: [
-                        [
-                            '@emotion/babel-plugin',
-                            {
-                                sourceMap: false,
-                                autoLabel: 'dev-only',
-                                labelFormat: '[local]',
-                                cssPropOptimization: true,
-                            },
-                        ],
-                    ],
-                },
-            }),
-            dts({ include: ['lib'] }),
-        ],
+        plugins: [VitePluginHtmlEnv({ compiler: false }), react(), dts({ include: ['lib'] })],
         resolve: { alias: { '@': resolve(__dirname, './src'), $: resolve(__dirname, './lib') } },
     });
 };

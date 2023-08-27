@@ -1,15 +1,25 @@
-import styled from '@emotion/styled';
+import { CSSProperties } from 'react';
 
-export const MaskedIcon = styled.svg<{
+const iconStyle = (src: string, size: string, color: string = 'currentcolor'): CSSProperties => ({
+    backgroundColor: color,
+    mask: `url(${src}) center left no-repeat`,
+    WebkitMask: `url(${src}) center left no-repeat`,
+    maskSize: `contain`,
+    WebkitMaskSize: `contain`,
+    width: size,
+    height: size,
+    padding: 0,
+    margin: 0,
+});
+
+interface IProps {
     src: string;
     size: string;
     color?: string;
-}>`
-    background-color: ${({ color }) => color || 'currentcolor'};
-    mask: url(${({ src }) => src}) no-repeat center left;
-    mask-size: contain;
-    width: ${({ size }) => size};
-    height: ${({ size }) => size};
-    padding: 0;
-    margin: 0;
-`;
+    className?: string;
+    style?: CSSProperties;
+}
+
+export function MaskedIcon({ src, size, color, className, style }: IProps) {
+    return <svg style={{ ...iconStyle(src, size, color), ...style }} className={className} />;
+}

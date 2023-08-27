@@ -1,5 +1,5 @@
-import { ORIGIN } from '@/Utils';
-import { Point } from '@/types';
+import { ORIGIN } from '$/Utils';
+import { Point } from '$/types';
 import { MouseEvent as SyntheticMouseEvent, RefObject, useState, useRef } from 'react';
 
 export default function usePan(ref: RefObject<HTMLElement | null>) {

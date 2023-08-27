@@ -1,15 +1,15 @@
-import { clamp } from '@/Utils';
-import { Rect } from '@/types';
-import styled from '@emotion/styled';
+import { clamp } from '$/Utils';
+import { Rect } from '$/types';
+import { CSSProperties } from 'react';
 
-const Svg = styled.svg<{ realSize: number }>`
-    position: absolute;
-    width: ${props => props.realSize}px;
-    height: ${props => props.realSize}px;
-    pointer-events: none;
-    top: 0;
-    left: 0;
-`;
+const svgStyle = (realSize: number): CSSProperties => ({
+    position: 'absolute',
+    width: realSize + 'px',
+    height: realSize + 'px',
+    pointerEvents: 'none',
+    top: '0',
+    left: '0',
+});
 
 interface IProps {
     mask: Rect | null;
@@ -37,7 +37,7 @@ export default function MaskedArea({
     const realSize = dimensions * cellSize;
 
     return (
-        <Svg viewBox={`0 0 ${realSize} ${realSize}`} realSize={realSize}>
+        <svg viewBox={`0 0 ${realSize} ${realSize}`} style={svgStyle(realSize)}>
             <defs>
                 <mask id="myMask">
                     {/* Everything under a white pixel will be visible */}
@@ -65,6 +65,6 @@ export default function MaskedArea({
                 fill={color}
                 rx={radius}
             />
-        </Svg>
+        </svg>
     );
 }

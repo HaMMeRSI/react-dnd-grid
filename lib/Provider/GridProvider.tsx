@@ -1,4 +1,4 @@
-import { Rect } from '@/types';
+import { Rect } from '$/types';
 import { ReactNode, createContext, useContext, useState } from 'react';
 
 interface IDndApi {

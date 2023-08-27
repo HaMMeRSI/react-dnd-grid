@@ -1,4 +1,4 @@
-import { easeInOutSine, remap } from '@/Utils';
+import { easeInOutSine, remap } from '$/Utils';
 import { RefObject, useCallback, useEffect, useState } from 'react';
 
 function clamp(min: number, max: number, val: number) {

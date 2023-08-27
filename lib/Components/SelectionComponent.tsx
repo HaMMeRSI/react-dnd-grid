@@ -1,58 +1,50 @@
-import { MouseEvent as SyntheticMouseEvent } from 'react';
+import { CSSProperties, MouseEvent as SyntheticMouseEvent } from 'react';
 import MoveSvg from '$/assets/move.svg';
 import StretchSvg from '$/assets/stretch.svg';
 
-import { Rect } from '@/types';
-import styled from '@emotion/styled';
+import { Rect } from '$/types';
 import { MaskedIcon } from './MaskedIcon';
 
-const Container = styled.div`
-    user-select: none;
-    position: absolute;
-`;
-
-const MoveContainer = styled.div<{ scale: number }>`
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    transform-origin: 100% 100%;
-    scale: ${({ scale }) => scale};
-    z-index: 2;
-`;
-const StretchContainer = styled.div<{ scale: number }>`
-    position: absolute;
-    bottom: -5px;
-    right: -5px;
-    transform-origin: top left;
-    scale: ${({ scale }) => scale};
-    z-index: 2;
-`;
-const ComponentContainer = styled.div<{ scale: number }>`
-    position: absolute;
-    left: 100%;
-    top: calc(100% + 1px);
-    z-index: 2;
-    transform-origin: top right;
-    transform: translate(-100%, 0%) scale(${({ scale }) => scale});
-`;
-
-const Move = styled(MaskedIcon)`
-    background-color: white;
-    font-size: 4px;
-    width: 5px;
-    height: 5px;
-    cursor: grab;
-    display: block;
-`;
-
-const Stretch = styled(MaskedIcon)`
-    display: block;
-    background-color: white;
-    font-size: 4px;
-    width: 4px;
-    height: 4px;
-    cursor: nwse-resize;
-`;
+const containerStyle = (mask: Rect): CSSProperties => ({ userSelect: 'none', position: 'absolute', ...mask });
+const moveContainerStyle = (scale: number): CSSProperties => ({
+    position: 'absolute',
+    top: '-5px',
+    left: '-5px',
+    transformOrigin: '100% 100%',
+    scale,
+    zIndex: 2,
+});
+const StretchContainerStyle = (scale: number): CSSProperties => ({
+    position: 'absolute',
+    bottom: '-5px',
+    right: '-5px',
+    transformOrigin: 'top left',
+    scale,
+    zIndex: 2,
+});
+const componentContainerStyle = (scale: number): CSSProperties => ({
+    position: 'absolute',
+    left: '100%',
+    top: 'calc(100% + 1px)',
+    zIndex: 2,
+    transformOrigin: 'top right',
+    scale,
+    transform: 'translate(-100%, 0%)',
+});
+const moveStyle = {
+    fontSize: '4px',
+    width: '5px',
+    height: '5px',
+    cursor: 'grab',
+    display: 'block',
+};
+const stretchStyle = {
+    display: 'block',
+    fontSize: '4px',
+    width: '4px',
+    height: '4px',
+    cursor: 'nwse-resize',
+};
 
 type Props = {
     mask: Rect | null;
@@ -79,16 +71,16 @@ export default function DndComp({ mask, onDrag, onStretch, scale, component, sca
     }
 
     return (
-        <Container style={mask}>
-            <MoveContainer scale={scaled} onMouseDown={turnOn(onDrag)}>
-                {scaleIcon ?? <Move src={MoveSvg} size="4px" />}
-            </MoveContainer>
-            <ComponentContainer onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()} scale={scaled}>
+        <div style={containerStyle(mask)}>
+            <div style={moveContainerStyle(scaled)} onMouseDown={turnOn(onDrag)}>
+                {scaleIcon ?? <MaskedIcon src={MoveSvg} size="5px" color="white" style={moveStyle} />}
+            </div>
+            <div style={componentContainerStyle(scaled)} onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()}>
                 {component}
-            </ComponentContainer>
-            <StretchContainer scale={scaled} onMouseDown={turnOn(onStretch)}>
-                {stretchIcon ?? <Stretch src={StretchSvg} size="4px" />}
-            </StretchContainer>
-        </Container>
+            </div>
+            <div style={StretchContainerStyle(scaled)} onMouseDown={turnOn(onStretch)}>
+                {stretchIcon ?? <MaskedIcon src={StretchSvg} size="4px" color="white" style={stretchStyle} />}
+            </div>
+        </div>
     );
 }
